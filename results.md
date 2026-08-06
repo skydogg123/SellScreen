@@ -1,6 +1,6 @@
 # MACD Sell Screener Results
 
-_Last run: 2026-08-06 03:12 UTC_
+_Last run: 2026-08-06 03:26 UTC_
 
 ## No sell signals today
 
