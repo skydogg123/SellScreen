@@ -142,7 +142,7 @@ def send_email_alert(signals, errors=None):
         server.starttls()
         server.login(smtp_username, smtp_password)
         server.sendmail(email_from, [email_to], msg.as_string())
-    print(f"Email alert sent to {email_to}"):
+    print(f"Email alert sent to {email_to}")
    
 
 
