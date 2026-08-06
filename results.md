@@ -1,6 +1,6 @@
 # MACD Sell Screener Results
 
-_Last run: 2026-08-06 03:05 UTC_
+_Last run: 2026-08-06 03:12 UTC_
 
 ## No sell signals today
 
@@ -15,6 +15,7 @@ _Last run: 2026-08-06 03:05 UTC_
 | FRGT | 2026-08-05 | -0.2226 | -0.2396 |  |
 | GSBD | 2026-08-05 | -0.0423 | -0.0567 |  |
 | OKLO | 2026-08-05 | -3.0240 | -3.7087 |  |
+| OLN | 2026-08-05 | -0.8215 | -0.4673 |  |
 | PONY | 2026-08-05 | 0.1033 | -0.0537 |  |
 | QBTS | 2026-08-05 | -0.4421 | -1.1018 |  |
 | QS | 2026-08-05 | -0.4466 | -0.5100 |  |
@@ -25,7 +26,3 @@ _Last run: 2026-08-06 03:05 UTC_
 | SMR | 2026-08-05 | -0.2050 | -0.4249 |  |
 | SOUN | 2026-08-05 | -0.1655 | -0.2179 |  |
 | XE | 2026-08-05 | -0.3908 | -1.0760 |  |
-
-## Errors
-
-- OLIN: No MACD data returned for OLIN: {'Error Message': 'This API call returns NO data. Please check documentation'}
