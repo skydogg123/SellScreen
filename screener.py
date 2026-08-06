@@ -101,7 +101,11 @@ def is_bearish_crossover(points):
     return was_above_or_equal and now_below
 
 
-def send_email_alert(signals):
+def send_email_alert(signals, errors=None):
+    """Always sends a daily email: a sell alert if signals fired, otherwise
+    a confirmation that nothing triggered."""
+    errors = errors or []
+
     smtp_server = os.environ.get("SMTP_SERVER")
     smtp_port = int(os.environ.get("SMTP_PORT", "587"))
     smtp_username = os.environ.get("SMTP_USERNAME")
@@ -113,13 +117,24 @@ def send_email_alert(signals):
         print("SMTP secrets not fully configured; skipping email.", file=sys.stderr)
         return
 
-    lines = [f"MACD sell signal (bearish crossover) fired for:\n"]
-    for s in signals:
-        lines.append(f"  - {s['ticker']}: MACD {s['macd']:.4f} crossed below signal {s['signal']:.4f} on {s['date']}")
+    if signals:
+        subject = f"MACD Sell Alert: {', '.join(s['ticker'] for s in signals)}"
+        lines = ["MACD sell signal (bearish crossover) fired for:\n"]
+        for s in signals:
+            lines.append(f"  - {s['ticker']}: MACD {s['macd']:.4f} crossed below signal {s['signal']:.4f} on {s['date']}")
+    else:
+        subject = "MACD Daily Check: no sell signals today"
+        lines = ["Checked all tickers today — no MACD bearish crossovers detected."]
+
+    if errors:
+        lines.append("\nNote: some tickers could not be checked:")
+        for e in errors:
+            lines.append(f"  - {e}")
+
     body = "\n".join(lines)
 
     msg = MIMEText(body)
-    msg["Subject"] = f"MACD Sell Alert: {', '.join(s['ticker'] for s in signals)}"
+    msg["Subject"] = subject
     msg["From"] = email_from
     msg["To"] = email_to
 
@@ -127,7 +142,8 @@ def send_email_alert(signals):
         server.starttls()
         server.login(smtp_username, smtp_password)
         server.sendmail(email_from, [email_to], msg.as_string())
-    print(f"Email alert sent to {email_to}")
+    print(f"Email alert sent to {email_to}")):
+   
 
 
 def main():
@@ -170,11 +186,7 @@ def main():
             time.sleep(SECONDS_BETWEEN_CALLS)
 
     write_results(checked, errors)
-
-    if signals:
-        send_email_alert(signals)
-    else:
-        print("No sell signals today.")
+    send_email_alert(signals, errors)
 
 
 def write_results(checked, errors):
