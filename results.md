@@ -1,6 +1,6 @@
 # MACD Sell Screener Results
 
-_Last run: 2026-08-07 23:22 UTC_
+_Last run: 2026-08-10 22:09 UTC_
 
 ## No sell signals today
 
@@ -8,24 +8,21 @@ _Last run: 2026-08-07 23:22 UTC_
 
 | Ticker | Date | MACD | Signal | Sell Signal |
 |---|---|---|---|---|
-
-## Errors
-
-- AXTI: No MACD data returned for AXTI: {}
-- BBAI: No MACD data returned for BBAI: {}
-- BLNK: No MACD data returned for BLNK: {}
-- DIS: No MACD data returned for DIS: {}
-- FRGT: No MACD data returned for FRGT: {}
-- GSBD: No MACD data returned for GSBD: {}
-- OKLO: No MACD data returned for OKLO: {}
-- OLN: No MACD data returned for OLN: {}
-- PONY: No MACD data returned for PONY: {}
-- QBTS: No MACD data returned for QBTS: {}
-- QS: No MACD data returned for QS: {}
-- RBLX: No MACD data returned for RBLX: {}
-- RVSN: No MACD data returned for RVSN: {}
-- SNDL: No MACD data returned for SNDL: {}
-- SMCI: No MACD data returned for SMCI: {}
-- SMR: No MACD data returned for SMR: {}
-- SOUN: No MACD data returned for SOUN: {}
-- XE: No MACD data returned for XE: {}
+| AXTI | 2026-08-10 | 1.9654 | -2.8434 |  |
+| BBAI | 2026-08-10 | -0.0873 | -0.1754 |  |
+| BLNK | 2026-08-10 | -0.0113 | -0.0249 |  |
+| DIS | 2026-08-10 | 1.2738 | 0.2701 |  |
+| FRGT | 2026-08-10 | -0.2867 | -0.2490 |  |
+| GSBD | 2026-08-10 | 0.1135 | 0.0007 |  |
+| OKLO | 2026-08-10 | -1.8073 | -2.9497 |  |
+| OLN | 2026-08-10 | -0.9913 | -0.7083 |  |
+| PONY | 2026-08-10 | 0.1890 | 0.0467 |  |
+| QBTS | 2026-08-10 | -0.1672 | -0.6867 |  |
+| QS | 2026-08-10 | -0.2633 | -0.4201 |  |
+| RBLX | 2026-08-10 | -3.9736 | -2.6923 |  |
+| RVSN | 2026-08-10 | -0.0502 | -0.1369 |  |
+| SNDL | 2026-08-10 | -0.0348 | -0.0362 |  |
+| SMCI | 2026-08-10 | 0.2463 | -0.3146 |  |
+| SMR | 2026-08-10 | -0.0317 | -0.2487 |  |
+| SOUN | 2026-08-10 | 0.1054 | -0.0949 |  |
+| XE | 2026-08-10 | 0.5184 | -0.3963 |  |
