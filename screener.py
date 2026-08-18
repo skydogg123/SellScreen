@@ -113,6 +113,25 @@ def is_macd_declining(points):
     today, yesterday = points[0], points[1]
     return today["macd"] < yesterday["macd"]
 
+def format_table(checked):
+    """Plain-text, fixed-width table of every ticker checked, for the email body."""
+    header = f"{'Ticker':<8}{'Date':<12}{'MACD':<10}{'Signal':<10}{'Prev MACD':<12}{'Crossover':<11}{'Declining':<10}"
+    rule = "-" * len(header)
+    rows = [header, rule]
+    for c in checked:
+        cross_flag = "YES" if c["sell_signal"] else ""
+        decline_flag = "YES" if c["declining"] else ""
+        rows.append(
+            f"{c['ticker']:<8}{c['date']:<12}{c['macd']:<10.4f}{c['signal']:<10.4f}"
+            f"{c['prev_macd']:<12.4f}{cross_flag:<11}{decline_flag:<10}"
+        )
+    return "\n".join(rows)
+
+def send_email_alert(crossover_signals, declining_signals, checked, errors=None):
+    """Always sends a daily email: an alert listing whichever triggers
+    fired, otherwise a confirmation that nothing triggered. Always
+    includes the full data table for every ticker checked."""
+    errors = errors or []
 
 def send_email_alert(crossover_signals, declining_signals, errors=None):
     """Always sends a daily email: an alert listing whichever triggers
@@ -159,7 +178,10 @@ def send_email_alert(crossover_signals, declining_signals, errors=None):
         for e in errors:
             lines.append(f"  - {e}")
 
-    body = "\n".join(lines)
+  lines.append("\nFull data for all tickers checked:\n")
+    lines.append(format_table(checked))
+   
+   body = "\n".join(lines)
 
     msg = MIMEText(body)
     msg["Subject"] = subject
@@ -227,7 +249,7 @@ def main():
             time.sleep(SECONDS_BETWEEN_CALLS)
 
     write_results(checked, errors)
-    send_email_alert(crossover_signals, declining_signals, errors)
+    send_email_alert(crossover_signals, declining_signals, checked, errors)
 
 
 def write_results(checked, errors):
