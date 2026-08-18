@@ -3,11 +3,18 @@
 MACD Sell Signal Screener
 --------------------------
 Reads a list of tickers from tickers.txt, pulls daily MACD values for each
-from Alpha Vantage, and flags any ticker whose MACD line has just crossed
-BELOW its signal line (the classic MACD bearish/"sell" crossover).
+from Alpha Vantage, and checks two triggers for each ticker:
+
+  1. Bearish crossover: the MACD line crosses BELOW its signal line
+     (the classic MACD "sell" signal).
+  2. Declining MACD: today's MACD value is lower than yesterday's MACD
+     value (momentum weakening day-over-day, even without a full
+     crossover).
 
 Results are written to results.md (committed back to the repo by the
-GitHub Actions workflow) and, if any signals fire, an email alert is sent.
+GitHub Actions workflow). An email is sent every run: a signal alert if
+either trigger fired for any ticker, otherwise a confirmation that
+nothing triggered.
 
 Environment variables required:
   ALPHAVANTAGE_API_KEY   - free key from https://www.alphavantage.co/support/#api-key
@@ -101,9 +108,15 @@ def is_bearish_crossover(points):
     return was_above_or_equal and now_below
 
 
-def send_email_alert(signals, errors=None):
-    """Always sends a daily email: a sell alert if signals fired, otherwise
-    a confirmation that nothing triggered."""
+def is_macd_declining(points):
+    """True if today's MACD value is lower than yesterday's MACD value."""
+    today, yesterday = points[0], points[1]
+    return today["macd"] < yesterday["macd"]
+
+
+def send_email_alert(crossover_signals, declining_signals, errors=None):
+    """Always sends a daily email: an alert listing whichever triggers
+    fired, otherwise a confirmation that nothing triggered."""
     errors = errors or []
 
     smtp_server = os.environ.get("SMTP_SERVER")
@@ -117,14 +130,29 @@ def send_email_alert(signals, errors=None):
         print("SMTP secrets not fully configured; skipping email.", file=sys.stderr)
         return
 
-    if signals:
-        subject = f"MACD Sell Alert: {', '.join(s['ticker'] for s in signals)}"
-        lines = ["MACD sell signal (bearish crossover) fired for:\n"]
-        for s in signals:
-            lines.append(f"  - {s['ticker']}: MACD {s['macd']:.4f} crossed below signal {s['signal']:.4f} on {s['date']}")
+    any_signals = bool(crossover_signals or declining_signals)
+
+    if any_signals:
+        subject_tickers = sorted(set(
+            [s["ticker"] for s in crossover_signals] + [s["ticker"] for s in declining_signals]
+        ))
+        subject = f"MACD Alert: {', '.join(subject_tickers)}"
+        lines = []
+
+        if crossover_signals:
+            lines.append("Bearish crossover (MACD crossed below signal line):\n")
+            for s in crossover_signals:
+                lines.append(f"  - {s['ticker']}: MACD {s['macd']:.4f} crossed below signal {s['signal']:.4f} on {s['date']}")
+            lines.append("")
+
+        if declining_signals:
+            lines.append("MACD declining day-over-day:\n")
+            for s in declining_signals:
+                lines.append(f"  - {s['ticker']}: MACD {s['macd']:.4f} today vs {s['prev_macd']:.4f} yesterday on {s['date']}")
+            lines.append("")
     else:
-        subject = "MACD Daily Check: no sell signals today"
-        lines = ["Checked all tickers today — no MACD bearish crossovers detected."]
+        subject = "MACD Daily Check: no signals today"
+        lines = ["Checked all tickers today — no bearish crossovers and no MACD declines detected."]
 
     if errors:
         lines.append("\nNote: some tickers could not be checked:")
@@ -143,7 +171,6 @@ def send_email_alert(signals, errors=None):
         server.login(smtp_username, smtp_password)
         server.sendmail(email_from, [email_to], msg.as_string())
     print(f"Email alert sent to {email_to}")
-   
 
 
 def main():
@@ -156,7 +183,8 @@ def main():
         print("No tickers to check.")
         return
 
-    signals = []
+    crossover_signals = []
+    declining_signals = []
     errors = []
     checked = []
 
@@ -164,19 +192,32 @@ def main():
         try:
             points = fetch_macd(ticker)
             crossed = is_bearish_crossover(points)
+            declining = is_macd_declining(points)
+
             checked.append({
                 "ticker": ticker,
                 "date": points[0]["date"],
                 "macd": points[0]["macd"],
                 "signal": points[0]["signal"],
+                "prev_macd": points[1]["macd"],
                 "sell_signal": crossed,
+                "declining": declining,
             })
+
             if crossed:
-                signals.append({
+                crossover_signals.append({
                     "ticker": ticker,
                     "date": points[0]["date"],
                     "macd": points[0]["macd"],
                     "signal": points[0]["signal"],
+                })
+
+            if declining:
+                declining_signals.append({
+                    "ticker": ticker,
+                    "date": points[0]["date"],
+                    "macd": points[0]["macd"],
+                    "prev_macd": points[1]["macd"],
                 })
         except Exception as e:
             errors.append(f"{ticker}: {e}")
@@ -186,28 +227,41 @@ def main():
             time.sleep(SECONDS_BETWEEN_CALLS)
 
     write_results(checked, errors)
-    send_email_alert(signals, errors)
+    send_email_alert(crossover_signals, declining_signals, errors)
 
 
 def write_results(checked, errors):
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     lines = [f"# MACD Sell Screener Results\n", f"_Last run: {now}_\n"]
 
-    signals = [c for c in checked if c["sell_signal"]]
-    if signals:
-        lines.append("## Sell signals (MACD crossed below signal line)\n")
-        for s in signals:
+    crossovers = [c for c in checked if c["sell_signal"]]
+    decliners = [c for c in checked if c["declining"]]
+
+    if crossovers:
+        lines.append("## Bearish crossovers (MACD crossed below signal line)\n")
+        for s in crossovers:
             lines.append(f"- **{s['ticker']}** on {s['date']} (MACD {s['macd']:.4f} / Signal {s['signal']:.4f})")
         lines.append("")
-    else:
-        lines.append("## No sell signals today\n")
+
+    if decliners:
+        lines.append("## MACD declining day-over-day\n")
+        for s in decliners:
+            lines.append(f"- **{s['ticker']}** on {s['date']} (MACD {s['macd']:.4f} vs {s['prev_macd']:.4f} yesterday)")
+        lines.append("")
+
+    if not crossovers and not decliners:
+        lines.append("## No signals today\n")
 
     lines.append("## All tickers checked\n")
-    lines.append("| Ticker | Date | MACD | Signal | Sell Signal |")
-    lines.append("|---|---|---|---|---|")
+    lines.append("| Ticker | Date | MACD | Signal | Prev MACD | Crossover | Declining |")
+    lines.append("|---|---|---|---|---|---|---|")
     for c in checked:
-        flag = "YES" if c["sell_signal"] else ""
-        lines.append(f"| {c['ticker']} | {c['date']} | {c['macd']:.4f} | {c['signal']:.4f} | {flag} |")
+        cross_flag = "YES" if c["sell_signal"] else ""
+        decline_flag = "YES" if c["declining"] else ""
+        lines.append(
+            f"| {c['ticker']} | {c['date']} | {c['macd']:.4f} | {c['signal']:.4f} | "
+            f"{c['prev_macd']:.4f} | {cross_flag} | {decline_flag} |"
+        )
 
     if errors:
         lines.append("\n## Errors\n")
