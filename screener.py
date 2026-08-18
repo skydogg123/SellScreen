@@ -113,6 +113,7 @@ def is_macd_declining(points):
     today, yesterday = points[0], points[1]
     return today["macd"] < yesterday["macd"]
 
+
 def format_table(checked):
     """Plain-text, fixed-width table of every ticker checked, for the email body."""
     header = f"{'Ticker':<8}{'Date':<12}{'MACD':<10}{'Signal':<10}{'Prev MACD':<12}{'Crossover':<11}{'Declining':<10}"
@@ -127,15 +128,11 @@ def format_table(checked):
         )
     return "\n".join(rows)
 
+
 def send_email_alert(crossover_signals, declining_signals, checked, errors=None):
     """Always sends a daily email: an alert listing whichever triggers
     fired, otherwise a confirmation that nothing triggered. Always
     includes the full data table for every ticker checked."""
-    errors = errors or []
-
-def send_email_alert(crossover_signals, declining_signals, errors=None):
-    """Always sends a daily email: an alert listing whichever triggers
-    fired, otherwise a confirmation that nothing triggered."""
     errors = errors or []
 
     smtp_server = os.environ.get("SMTP_SERVER")
@@ -178,10 +175,10 @@ def send_email_alert(crossover_signals, declining_signals, errors=None):
         for e in errors:
             lines.append(f"  - {e}")
 
-  lines.append("\nFull data for all tickers checked:\n")
+    lines.append("\nFull data for all tickers checked:\n")
     lines.append(format_table(checked))
-   
-   body = "\n".join(lines)
+
+    body = "\n".join(lines)
 
     msg = MIMEText(body)
     msg["Subject"] = subject
