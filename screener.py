@@ -152,7 +152,7 @@ def send_email_alert(crossover_signals, declining_signals, checked, errors=None)
         subject_tickers = sorted(set(
             [s["ticker"] for s in crossover_signals] + [s["ticker"] for s in declining_signals]
         ))
-        subject = f"MACD Alert: {', '.join(subject_tickers)}"
+        subject = f"Sell MACD Alert: {', '.join(subject_tickers)}"
         lines = []
 
         if crossover_signals:
